@@ -1,0 +1,5 @@
+report/
+figma-unicourse/
+*.zip
+unicourse-demo/demo-*.png
+unicourse-demo/test-*.cjs
