@@ -17,5 +17,5 @@ const courses=[
  {id:'IT3050',name:'Phát triển ứng dụng web',credits:3,faculty:'CNTT',tags:['Lập trình','Thiết kế'],pre:['IT1010'],sections:[section('IT3050-01',0,3,5)]}
 ];
 
-return {version:2,courses,days:['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'],term:{label:'Học kỳ I · 2026–2027',start:'2026-10-12',weeks:16,utcOffsetMinutes:420,maxCredits:24,totalCredits:150},defaultCompleted:['IT1010','MI1111','IT2020']};
+return {version:2,courses,prerequisiteNames:{IT1010:'Nhập môn lập trình',MI1111:'Giải tích 1',IT2020:'Lập trình hướng đối tượng',EN1010:'Tiếng Anh cơ bản'},days:['Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'],term:{label:'Học kỳ I · 2026–2027',start:'2026-10-12',weeks:16,utcOffsetMinutes:420,maxCredits:24,totalCredits:150},defaultCompleted:['IT1010','MI1111','IT2020']};
 });

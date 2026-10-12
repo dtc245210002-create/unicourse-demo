@@ -6,6 +6,7 @@
 })(typeof globalThis === 'object' ? globalThis : this, data => {
   const bySection = new Map(data.courses.flatMap(c => c.sections.map(s => [s.id, {c, s}])));
   const lookup = id => bySection.get(id);
+  const courseLabel = id => id+' · '+(data.courses.find(c=>c.id===id)?.name || data.prerequisiteNames?.[id] || 'Chưa có tên môn');
   const credits = ids => ids.reduce((n, id) => n + (lookup(id)?.c.credits || 0), 0);
   const missing = (c, profile) => c.pre.filter(id => !profile.completed.includes(id));
   function conflicts(ids) {
@@ -30,8 +31,8 @@
       if (seen.has(c.id)) errors.push(c.id + ': chỉ được chọn một lớp mỗi học phần.');
       seen.add(c.id);
       if (s.seats <= 0) errors.push(s.id + ': lớp đã hết chỗ.');
-      if (missing(c, profile).length) errors.push(c.id + ': chưa đạt môn tiên quyết ' + missing(c, profile).join(', ') + '.');
-      if (c.coreq && !ids.some(x => lookup(x)?.c.id === c.coreq) && !profile.completed.includes(c.coreq)) errors.push(c.id + ': cần đăng ký cùng ' + c.coreq + '.');
+      if (missing(c, profile).length) errors.push(c.id + ': chưa đạt môn tiên quyết ' + missing(c, profile).map(courseLabel).join(', ') + '.');
+      if (c.coreq && !ids.some(x => lookup(x)?.c.id === c.coreq) && !profile.completed.includes(c.coreq)) errors.push(c.id + ': cần đăng ký cùng ' + courseLabel(c.coreq) + '.');
       if (profile.completed.includes(c.id)) errors.push(c.id + ': bạn đã hoàn thành môn này.');
     }
     return [...new Set(errors)];
@@ -41,14 +42,15 @@
   function recommend(profile, prefs) {
     if (!profile.known) return {ids:[], error:'missing-profile', explored:0};
     if (!Number.isInteger(prefs.target) || prefs.target < 8 || prefs.target > 24) return {ids:[], error:'invalid-target', explored:0};
+    const excluded = new Set(prefs.excludedDays || (prefs.noSaturday ? [5] : []));
     const ranked = data.courses.filter(c => !missing(c,profile).length && !profile.completed.includes(c.id))
       .map(c => ({c, score:10+c.tags.filter(t=>prefs.tags.includes(t)).length*8+(c.id==='IT3011'?4:0),
-        sections:c.sections.filter(s=>s.seats>0&&(!prefs.noSaturday||s.day!==5))}))
+        sections:c.sections.filter(s=>s.seats>0&&!excluded.has(s.day))}))
       .filter(x=>x.sections.length).sort((a,b)=>Number(!!a.c.coreq)-Number(!!b.c.coreq)||b.score-a.score||a.c.id.localeCompare(b.c.id));
     const remaining = Array(ranked.length+1).fill(0);
     for (let i=ranked.length-1;i>=0;i--) remaining[i]=remaining[i+1]+ranked[i].c.credits;
     let best={ids:[],credits:0,score:-1}, explored=0;
-    const occupied=Array(6).fill(0), selected=new Set(), memo=new Map();
+    const occupied=Array(7).fill(0), selected=new Set(), memo=new Map();
     function visit(i, ids, count, heavy, score) {
       explored++;
       if (Math.min(prefs.target,count+remaining[i])<best.credits) return;
@@ -81,5 +83,5 @@
     const {s}=lookup(id);
     return data.days[s.day]+' · '+clock(periodMinutes(s.start))+'–'+clock(periodMinutes(s.start)+(s.end-s.start+1)*50);
   }
-  return {lookup,credits,missing,conflicts,problems,recommend,periodMinutes,clock,sectionTime};
+  return {courseLabel,lookup,credits,missing,conflicts,problems,recommend,periodMinutes,clock,sectionTime};
 });
